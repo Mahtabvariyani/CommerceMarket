@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { commerce } from "./lib/commerce";
-import { Products, Navbar, Cart } from "./components";
+import { Products, Navbar, Cart ,CheckOut } from "./components";
+
 import { Routes, Route } from "react-router-dom";
+import "./index.css";
+
 function App() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState({});
+
 
   const fetchProducts = async () => {
     const { data } = await commerce.products.list();
@@ -17,9 +21,30 @@ function App() {
   };
 
   const handleAddToCart = async (productId, quantity) => {
-    const item = await commerce.cart.add(productId, quantity);
+    try {
+      const item = await commerce.cart.add(productId, quantity);
+      setCart(item.cart);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
+  };
 
-    setCart(item.cart);
+  const handleUpdateCartQty = async (productId, quantity) => {
+    const { cart } = await commerce.cart.update(productId, { quantity });
+
+    setCart(cart);
+  };
+
+  const handleRemoveFromCart = async (productId) => {
+    const { cart } = await commerce.cart.remove(productId);
+
+    setCart(cart);
+  };
+
+  const handleEmptyCart = async () => {
+    const { cart } = await commerce.cart.empty();
+
+    setCart(cart);
   };
 
   useEffect(() => {
@@ -38,7 +63,23 @@ function App() {
             <Products products={products} onAddToCart={handleAddToCart} />
           }
         />
-        <Route path="/cart" element={<Cart cart={cart} />} />
+        <Route 
+        path="/checkout"
+        element={
+       <CheckOut cart={cart} />
+        }
+        />
+        <Route
+          path="/cart"
+          element={
+            <Cart
+              cart={cart}
+              handleUpdateCartQty={handleUpdateCartQty}
+              handleRemoveFromCart={handleRemoveFromCart}
+              handleEmptyCart={handleEmptyCart}
+            />
+          }
+        />
       </Routes>
     </div>
   );
